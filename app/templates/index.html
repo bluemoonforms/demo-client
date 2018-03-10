@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <base href="./">
+    <title>Demo Client Index</title>
+    <link href="//cdn.muicss.com/mui-0.9.36/css/mui.min.css" rel="stylesheet" type="text/css" />
+    <script src="//cdn.muicss.com/mui-0.9.36/js/mui.min.js"></script>
+    <style>
+      /**
+       * Body CSS
+       */
+      html,
+      body {
+        height: 100%;
+      }
+
+      html,
+      body,
+      input,
+      textarea,
+      buttons {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.004);
+      }
+
+      /**
+       * Header CSS
+       */
+      header {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 2;
+      }
+
+      header ul.mui-list--inline {
+        margin-bottom: 0;
+      }
+
+      header a {
+        color: white;
+      }
+
+      header table {
+        width: 100%;
+      }
+
+      /**
+       * Content CSS
+       */
+      #content-wrapper {
+        min-height: 100%;
+
+        /* sticky footer */
+        box-sizing: border-box;
+        margin-bottom: -100px;
+        padding-bottom: 100px;
+      }
+
+      /**
+       * Footer CSS
+       */
+      footer {
+        box-sizing: border-box;
+        height: 100px;
+        background-color: #eee;
+        border-top: 1px solid #e0e0e0;
+        padding-top: 35px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="mui-appbar mui--z1">
+      <div class="mui-container">
+        <table>
+          <tr class="mui--appbar-height">
+            <td class="mui--text-title">Demo App</td>
+            <td class="mui--text-right">
+              <ul class="mui-list--inline mui--text-body2">
+                <li><a href="/">Leases</a></li>
+                <li><a href="/create">Create</a></li>
+                <li><a href="/logout">Logout</a></li>
+              </ul>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </header>
+    <div id="content-wrapper" class="mui--text-center">
+      <script type="text/javascript">
+          window.BLUEMOON_CONFIG = {{ context.configuration|tojson|safe }};
+      </script>
+      <br/>
+      <br/>
+      <br/>
+      <app-root></app-root>
+    </div>
+    <footer>
+      <div class="mui-container mui--text-center">
+        Demo site by steveed
+      </div>
+    </footer>
+    {% for js_file in context.js_files %}
+    <script type="text/javascript" src="//{{context.static_url}}/{{js_file}}"></script>
+    {% endfor %}
+  </body>
+</html>

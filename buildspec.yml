@@ -1,0 +1,16 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --region us-east-1)
+  build:
+    commands:
+      - echo Build started on `date`
+      - CLEAN_SOURCE=`echo $CODEBUILD_SOURCE_VERSION | sed 's/\///g'`
+      - docker build -t 727482340929.dkr.ecr.us-east-1.amazonaws.com/demo-client:$CLEAN_SOURCE -f Dockerfile .
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - docker push 727482340929.dkr.ecr.us-east-1.amazonaws.com/demo-client:$CLEAN_SOURCE
