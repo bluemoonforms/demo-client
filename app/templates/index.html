@@ -8,6 +8,11 @@
     <title>Demo Client Index</title>
     <link href="//cdn.muicss.com/mui-0.9.36/css/mui.min.css" rel="stylesheet" type="text/css" />
     <script src="//cdn.muicss.com/mui-0.9.36/js/mui.min.js"></script>
+    <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    {% for css_file in context.css_files %}
+    <link href="//{{context.static_url}}/{{css_file}}" rel="stylesheet" type="text/css" />
+    {% endfor %}
+
     <style>
       /**
        * Body CSS
@@ -91,14 +96,16 @@
         </table>
       </div>
     </header>
-    <div id="content-wrapper" class="mui--text-center">
-      <script type="text/javascript">
+    <div id="content-wrapper">
+      <br/>
+      <br/>
+      <br/>
+      <div class="blueMoon">
+        <script type="text/javascript">
           window.BLUEMOON_CONFIG = {{ context.configuration|tojson|safe }};
-      </script>
-      <br/>
-      <br/>
-      <br/>
-      <app-root></app-root>
+        </script>
+        <app-root></app-root>
+      </div>
     </div>
     <footer>
       <div class="mui-container mui--text-center">
