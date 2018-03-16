@@ -4,33 +4,41 @@
 <div class="mui--appbar-height"></div>
 <br>
 <br>
-<h2>Implementing Bluemoon Forms Lease Application</h2>
-<ol>
-    <li>Include the Bluemoon CSS file:<br />
-        <pre>
-        {% for css_file in context.css_files %}
-&lt;link href=&quot;//{{context.static_url}}/{{css_file}}&quot; rel=&quot;stylesheet&quot; type=&quot;text/css&quot;/&gt;
-        {% endfor %}
-        </pre>
-    </li>
-    <li>Add the base container where you want the code to display:<br />
-        <pre>&lt;div class=&quot;blueMoon&quot;&gt;
-  &lt;app-root&gt;&lt;/app-root&gt;
-&lt;/div&gt;</pre>
-    </li>
-    <li>Implement the integration configuration:<br />
-        <pre>&lt;script type=&quot;text/javascript&quot;&gt;
-window.BLUEMOON_CONFIG = {{ context.configuration|tojson_pretty|safe }};
-&lt;/script&gt;</pre>
-    </li>
-    <li>Finally include the JS files:</p>
-        <pre>
-        {% for js_file in context.js_files %}
-&lt;script type=&quot;text/javascript&quot; src=&quot;//{{context.static_url}}/{{js_file}}&quot;&gt;&lt;/script&gt;
-        {% endfor %}
-        </pre>
-    </li>
-</ol>
-<h2>Optional integrations</h2>
-<p>This and that.</p>
+<div class="mui-container">
+    <div class="mui--text-display2">Implementing Bluemoon Forms Lease Application</div>
+    <ol>
+        <li>Include the Bluemoon CSS file:<br />
+            <div class="mui-panel">
+                <pre>
+            {% for css_file in context.css_files %}
+    &lt;link href=&quot;//{{context.static_url}}/{{css_file}}&quot; rel=&quot;stylesheet&quot; type=&quot;text/css&quot;/&gt;
+            {% endfor %}
+                </pre>
+            </div>
+        </li>
+        <li>Add the base container where you want the code to display:<br />
+            <div class="mui-panel">
+                <pre>&lt;div class=&quot;blueMoon&quot;&gt;
+      &lt;app-root&gt;&lt;/app-root&gt;
+    &lt;/div&gt;</pre>
+            </div>
+        </li>
+        <li>Implement the integration configuration:<br />
+            <div class="mui-panel">
+                <pre>&lt;script type=&quot;text/javascript&quot;&gt;
+    window.BLUEMOON_CONFIG = {{ context.configuration|tojson_pretty|safe }};
+    &lt;/script&gt;</pre>
+            </div>
+        </li>
+        <li>Finally include the JS files:</p>
+            <div class="mui-panel">
+                <pre>
+            {% for js_file in context.js_files %}
+    &lt;script type=&quot;text/javascript&quot; src=&quot;//{{context.static_url}}/{{js_file}}&quot;&gt;&lt;/script&gt;
+            {% endfor %}</pre>
+            </div>
+        </li>
+    </ol>
+    <div class="mui--text-display2">Optional integrations</div>
+</div>
 {% endblock %}
