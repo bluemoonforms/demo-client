@@ -10,7 +10,3 @@ services:
       - "8010:80"
     command: python /app/main.py
 version: '2'
-networks:
-  default:
-    external:
-      name: dev-network

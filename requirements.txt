@@ -1,3 +1,4 @@
+awscli
 flask
 jinja2
 flask-login
