@@ -209,17 +209,30 @@ def get_lease_id(token):
 
 def get_settings(configuration):
     """Pulling this out to reuse for multiple endpoint."""
-    context = {
-        'static_url': os.getenv('LEASE_EDITOR_CDN', 'localhost:4201'),
-        'configuration': configuration,
-        'js_files': [
+    js_files = [
+        'inline.bundle.js',
+        'polyfills.bundle.js',
+        'main.bundle.js',
+    ]
+    css_files = [
+        'styles/styles.bundle.css',
+    ]
+
+    if app.debug:
+        js_files = [
             'inline.bundle.js',
             'polyfills.bundle.js',
             'styles/styles.bundle.js',
             'vendor.bundle.js',
             'main.bundle.js',
-        ],
-        'css_files': []
+        ]
+        css_files = []
+
+    context = {
+        'static_url': os.getenv('LEASE_EDITOR_CDN', 'localhost:4201'),
+        'configuration': configuration,
+        'js_files': js_files,
+        'css_files': css_files
     }
     return context
 
