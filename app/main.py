@@ -4,6 +4,7 @@ import flask
 import flask_login
 import requests
 import sqlite3
+import json
 from flask_login.mixins import UserMixin
 from wtforms import Form, PasswordField, StringField
 
@@ -17,6 +18,23 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 DATABASE = '/app/database.db'
+BASE_HEADERS = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Provider': 'legacy'
+}
+
+
+def to_pretty_json(value):
+    """Pretty json for template."""
+    return json.dumps(
+        value,
+        sort_keys=True,
+        indent=4,
+        separators=(',', ': ')
+    )
+
+app.jinja_env.filters['tojson_pretty'] = to_pretty_json
 
 
 def get_db():
@@ -145,11 +163,7 @@ def load_user(user_id):
 
 def login_user(license, username, password):
     """Take the login credentials and validate against oauth password grant server."""
-    headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Provider': 'legacy'
-    }
+    headers = BASE_HEADERS.copy()
     url = '{}/oauth/token'.format(os.getenv('OAUTH_CLIENT_URL'))
     payload = {
         'username': username,
@@ -164,6 +178,50 @@ def login_user(license, username, password):
     if response.status_code == 200:
         user = User.store_user(license=license, username=username, token=data['access_token'])
         flask_login.login_user(user)
+
+
+def get_property_number(token):
+    """API query to fetch property number."""
+    headers = BASE_HEADERS.copy()
+    headers['Authorization'] = 'Bearer {}'.format(token)
+    url = '{}/api/property'.format(os.getenv('OAUTH_CLIENT_URL'))
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    if response.status_code == 200:
+        # Try to get the aptdb property number
+        for prop in data['data']:
+            if prop['unitType'] == 'aptdb':
+                return prop['id']
+        # No apt db then just return the first one
+        return data['data'][0]['id']
+
+
+def get_lease_id(token):
+    """API query to fetch lease number."""
+    headers = BASE_HEADERS.copy()
+    headers['Authorization'] = 'Bearer {}'.format(token)
+    url = '{}/api/lease'.format(os.getenv('OAUTH_CLIENT_URL'))
+    response = requests.post(url, headers=headers)
+    data = response.json()
+    if response.status_code == 200:
+        pass
+
+
+def get_settings(configuration):
+    """Pulling this out to reuse for multiple endpoint."""
+    context = {
+        'static_url': os.getenv('LEASE_EDITOR_CDN', 'localhost:4201'),
+        'configuration': configuration,
+        'js_files': [
+            'inline.bundle.js',
+            'polyfills.bundle.js',
+            'styles/styles.bundle.js',
+            'vendor.bundle.js',
+            'main.bundle.js',
+        ],
+        'css_files': []
+    }
+    return context
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -188,25 +246,87 @@ def login():
 @app.route('/', methods=['GET'])
 @flask_login.login_required
 def index():
-    """The primary index page for the application."""
+    """The primary integration page for the application."""
     configuration = {
-        'api_url': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
-        'property_number': 6060,
-        'access_token': flask_login.current_user.data['token']
+        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
+        'accessToken': flask_login.current_user.data['token']
     }
-    context = {
-        'static_url': os.getenv('LEASE_EDITOR_CDN', 'localhost:4201'),
-        'configuration': configuration,
-        'js_files': [
-            'inline.bundle.js',
-            'polyfills.bundle.js',
-            'styles/styles.bundle.js',
-            'vendor.bundle.js',
-            'main.bundle.js',
-        ]
-    }
+    context = get_settings(configuration=configuration)
 
-    return flask.render_template('index.html', context=context)
+    return flask.render_template('integration.html', context=context)
+
+
+@app.route('/create', methods=['GET'])
+@flask_login.login_required
+def create():
+    """An example of a lease create view only."""
+    configuration = {
+        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
+        'accessToken': flask_login.current_user.data['token'],
+        'navigation': False,
+        'view': 'create',
+        'callBack': flask.url_for('callback', _external=True)
+    }
+    context = get_settings(configuration=configuration)
+
+    return flask.render_template('integration.html', context=context)
+
+
+@app.route('/edit/<int:lease_id>', methods=['GET'])
+@flask_login.login_required
+def edit(lease_id):
+    """An example of a lease edit view only."""
+    configuration = {
+        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
+        'accessToken': flask_login.current_user.data['token'],
+        'navigation': False,
+        'view': 'edit',
+        'leaseId': lease_id,
+        'callBack': flask.url_for('callback', _external=True)
+    }
+    context = get_settings(configuration=configuration)
+
+    return flask.render_template('integration.html', context=context)
+
+
+@app.route('/callback', methods=['POST'])
+@flask_login.login_required
+def callback():
+    """An example of a callback for lease submission."""
+    return flask.jsonify({'message': 'Success'})
+
+
+@app.route('/docs', methods=['GET'])
+@flask_login.login_required
+def documentation():
+    """Documentation lease edit view only."""
+    configuration = {
+        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
+        'accessToken': 'TOKEN_GOES_HERE'
+    }
+    context = get_settings(configuration=configuration)
+    context['create_view'] = {
+        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
+        'accessToken': flask_login.current_user.data['token'],
+        'navigation': False,
+        'view': 'create',
+        'callBack': flask.url_for('callback', _external=True)
+    }
+    context['edit_view'] = {
+        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
+        'accessToken': flask_login.current_user.data['token'],
+        'navigation': False,
+        'view': 'edit',
+        'leaseId': 12345,
+        'callBack': flask.url_for('callback', _external=True)
+    }
+    return flask.render_template('docs.html', context=context)
 
 
 @app.route('/logout', methods=['GET'])
@@ -224,4 +344,6 @@ def unauthorized_handler():
 
 if __name__ == '__main__':
     # Only for debugging while developing
+    app.jinja_env.auto_reload = True
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.run(host='0.0.0.0', debug=True, port=80)

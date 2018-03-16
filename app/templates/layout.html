@@ -4,15 +4,10 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <base href="./">
-    <title>Demo Client Index</title>
+    <title>{% block title %}Demo Client{% endblock %}</title>
     <link href="//cdn.muicss.com/mui-0.9.36/css/mui.min.css" rel="stylesheet" type="text/css" />
-    <script src="//cdn.muicss.com/mui-0.9.36/js/mui.min.js"></script>
-    <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    {% for css_file in context.css_files %}
-    <link href="//{{context.static_url}}/{{css_file}}" rel="stylesheet" type="text/css" />
-    {% endfor %}
-
+    {% block css %}
+    {% endblock %}
     <style>
       /**
        * Body CSS
@@ -77,6 +72,10 @@
         border-top: 1px solid #e0e0e0;
         padding-top: 35px;
       }
+      .custom-form {
+        width: 50%;
+        margin-left: 10%;
+      }
     </style>
   </head>
   <body>
@@ -89,7 +88,10 @@
               <ul class="mui-list--inline mui--text-body2">
                 <li><a href="/">Leases</a></li>
                 <li><a href="/create">Create</a></li>
+                <li><a href="/docs">Documentation</a></li>
+                {% if current_user.is_authenticated %}
                 <li><a href="/logout">Logout</a></li>
+                {% endif %}
               </ul>
             </td>
           </tr>
@@ -97,23 +99,16 @@
       </div>
     </header>
     <div id="content-wrapper">
-      <br/>
-      <br/>
-      <br/>
-      <div class="blueMoon">
-        <script type="text/javascript">
-          window.BLUEMOON_CONFIG = {{ context.configuration|tojson|safe }};
-        </script>
-        <app-root></app-root>
-      </div>
+      {% block body %}
+      {% endblock %}
     </div>
     <footer>
       <div class="mui-container mui--text-center">
         Demo site by steveed
       </div>
     </footer>
-    {% for js_file in context.js_files %}
-    <script type="text/javascript" src="//{{context.static_url}}/{{js_file}}"></script>
-    {% endfor %}
+    <script src="//cdn.muicss.com/mui-0.9.36/js/mui.min.js"></script>
+    {% block scripts %}
+    {% endblock %}
   </body>
 </html>

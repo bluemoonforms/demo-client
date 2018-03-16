@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block title %}Blue Moon API - {{ context.title }}{% endblock %}
+
+{% block css %}
+{% for css_file in context.css_files %}
+<link href="//{{context.static_url}}/{{css_file}}" rel="stylesheet" type="text/css" />
+{% endfor %}
+{% endblock %}
+
+{% block body %}
+<br/>
+<br/>
+<br/>
+<div class="blueMoon">
+  <script type="text/javascript">
+    window.BLUEMOON_CONFIG = {{ context.configuration|tojson|safe }};
+  </script>
+  <app-root></app-root>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% for js_file in context.js_files %}
+<script type="text/javascript" src="//{{context.static_url}}/{{js_file}}"></script>
+{% endfor %}
+{% endblock %}
