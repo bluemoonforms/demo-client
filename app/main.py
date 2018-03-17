@@ -325,19 +325,21 @@ def documentation():
     context['create_view'] = {
         'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
         'propertyNumber': get_property_number(flask_login.current_user.data['token']),
-        'accessToken': flask_login.current_user.data['token'],
+        'accessToken': 'TOKEN_GOES_HERE',
         'navigation': False,
         'view': 'create',
-        'callBack': flask.url_for('callback', _external=True)
+        'callBack': flask.url_for('callback', _external=True),
+        'leaseData': None,
     }
     context['edit_view'] = {
         'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
         'propertyNumber': get_property_number(flask_login.current_user.data['token']),
-        'accessToken': flask_login.current_user.data['token'],
+        'accessToken': 'TOKEN_GOES_HERE',
         'navigation': False,
         'view': 'edit',
         'leaseId': 12345,
-        'callBack': flask.url_for('callback', _external=True)
+        'callBack': flask.url_for('callback', _external=True),
+        'leaseData': None,
     }
     return flask.render_template('docs.html', context=context)
 

@@ -2,6 +2,7 @@
 {% block title %}Blue Moon API - {{ context.title }}{% endblock %}
 
 {% block css %}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 {% for css_file in context.css_files %}
 <link href="//{{context.static_url}}/{{css_file}}" rel="stylesheet" type="text/css" />
 {% endfor %}
@@ -11,7 +12,7 @@
 <br/>
 <br/>
 <br/>
-<div class="blueMoon">
+<div id="blueMoon">
   <script type="text/javascript">
     window.BLUEMOON_CONFIG = {{ context.configuration|tojson|safe }};
   </script>

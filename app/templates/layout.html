@@ -6,8 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Demo Client{% endblock %}</title>
     <link href="//cdn.muicss.com/mui-0.9.36/css/mui.min.css" rel="stylesheet" type="text/css" />
-    {% block css %}
-    {% endblock %}
     <style>
       /**
        * Body CSS
@@ -15,16 +13,6 @@
       html,
       body {
         height: 100%;
-      }
-
-      html,
-      body,
-      input,
-      textarea,
-      buttons {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.004);
       }
 
       /**
@@ -77,6 +65,8 @@
         margin-left: 10%;
       }
     </style>
+    {% block css %}
+    {% endblock %}
   </head>
   <body>
     <header class="mui-appbar mui--z1">
