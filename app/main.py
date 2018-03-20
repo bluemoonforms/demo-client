@@ -5,6 +5,7 @@ import flask_login
 import requests
 import sqlite3
 import json
+import datetime
 from flask_login.mixins import UserMixin
 from wtforms import Form, PasswordField, StringField
 
@@ -266,7 +267,7 @@ def index():
         'accessToken': flask_login.current_user.data['token']
     }
     context = get_settings(configuration=configuration)
-
+    context['refresh'] = datetime.datetime.now().strftime('%Y%m%d%H%M')
     return flask.render_template('integration.html', context=context)
 
 
@@ -283,7 +284,7 @@ def create():
         'callBack': flask.url_for('callback', _external=True)
     }
     context = get_settings(configuration=configuration)
-
+    context['refresh'] = datetime.datetime.now().strftime('%Y%m%d%H%M')
     return flask.render_template('integration.html', context=context)
 
 
@@ -301,7 +302,7 @@ def edit(lease_id):
         'callBack': flask.url_for('callback', _external=True)
     }
     context = get_settings(configuration=configuration)
-
+    context['refresh'] = datetime.datetime.now().strftime('%Y%m%d%H%M')
     return flask.render_template('integration.html', context=context)
 
 
@@ -341,6 +342,7 @@ def documentation():
         'callBack': flask.url_for('callback', _external=True),
         'leaseData': None,
     }
+    context['refresh'] = datetime.datetime.now().strftime('%Y%m%d%H%M')
     return flask.render_template('docs.html', context=context)
 
 

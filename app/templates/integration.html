@@ -4,7 +4,7 @@
 {% block css %}
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 {% for css_file in context.css_files %}
-<link href="//{{context.static_url}}/{{css_file}}" rel="stylesheet" type="text/css" />
+<link href="//{{context.static_url}}/{{css_file}}?{{context.refresh}}" rel="stylesheet" type="text/css" />
 {% endfor %}
 {% endblock %}
 
@@ -22,6 +22,6 @@
 
 {% block scripts %}
 {% for js_file in context.js_files %}
-<script type="text/javascript" src="//{{context.static_url}}/{{js_file}}"></script>
+<script type="text/javascript" src="//{{context.static_url}}/{{js_file}}?{{context.refresh}}"></script>
 {% endfor %}
 {% endblock %}
