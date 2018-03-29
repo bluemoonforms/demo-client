@@ -7,7 +7,8 @@ import sqlite3
 import json
 import datetime
 from flask_login.mixins import UserMixin
-from wtforms import Form, PasswordField, StringField
+from wtforms import Form, PasswordField, StringField, IntegerField
+from wtforms.validators import ValidationError
 
 from urllib.parse import urlparse, urljoin
 
@@ -152,6 +153,22 @@ class LoginForm(Form):
     password = PasswordField('Password')
 
 
+def validate_lease_id(form, field):
+    """API query to fetch lease number."""
+    headers = BASE_HEADERS.copy()
+    headers['Authorization'] = 'Bearer {}'.format(flask_login.current_user.data['token'])
+    url = '{}/api/lease/{}'.format(os.getenv('OAUTH_CLIENT_URL'), field.data)
+    response = requests.get(url, headers=headers)
+    if response.status_code == 404:
+        raise ValidationError('Unable to find lease')
+    if response.status_code != 200:
+        raise ValidationError('Invalid lease id')
+
+
+class SelectLeaseForm(Form):
+    lease_id = IntegerField('Lease ID', [validate_lease_id])
+
+
 @login_manager.user_loader
 def load_user(user_id):
     """Find the user."""
@@ -195,17 +212,6 @@ def get_property_number(token):
                 return prop['id']
         # No apt db then just return the first one
         return data['data'][0]['id']
-
-
-def get_lease_id(token):
-    """API query to fetch lease number."""
-    headers = BASE_HEADERS.copy()
-    headers['Authorization'] = 'Bearer {}'.format(token)
-    url = '{}/api/lease'.format(os.getenv('OAUTH_CLIENT_URL'))
-    response = requests.post(url, headers=headers)
-    data = response.json()
-    if response.status_code == 200:
-        pass
 
 
 def get_settings(configuration):
@@ -286,6 +292,17 @@ def create():
     context = get_settings(configuration=configuration)
     context['refresh'] = datetime.datetime.now().strftime('%Y%m%d%H%M')
     return flask.render_template('integration.html', context=context)
+
+
+@app.route('/select', methods=['GET', 'POST'])
+@flask_login.login_required
+def select_lease():
+    """Input a lease id then if it exists redirect to integration."""
+    form = SelectLeaseForm(flask.request.form)
+    message = None
+    if flask.request.method == 'POST' and form.validate():
+        return flask.redirect(flask.url_for('edit', lease_id=form.lease_id.data))
+    return flask.render_template('select_lease.html', form=form, message=message)
 
 
 @app.route('/edit/<int:lease_id>', methods=['GET'])

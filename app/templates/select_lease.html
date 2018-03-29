@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block title %}Edit Lease{% endblock %}
+{% block body %}
+<div class="mui--appbar-height"></div>
+<br>
+<br>
+<div class="mui-col-sm-4 mui-col-sm-offset-4">
+  <form class="mui-form" method="POST" action="/select">
+    <legend>Insert the Lease ID to edit</legend>
+    {% if form.lease_id.errors %}
+        <ul class="errors">{% for error in form.lease_id.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    {% endif %}
+    <div class="mui-textfield">
+      {{ form.lease_id() }}
+      {{ form.lease_id.label }}
+    </div>
+    <input type="submit" class="mui-btn mui-btn--raised" value="Submit"/>
+  </form>
+</div>
+{% if lease %}
+<div class="mui-col-sm-4 mui-col-sm-offset-4">
+    <pre><code class="json">{{lease|tojson_pretty|safe}}</code></pre>
+</div>
+{% endif %}
+{% endblock %}
