@@ -316,7 +316,12 @@ def edit(lease_id):
         'navigation': False,
         'view': 'edit',
         'leaseId': lease_id,
-        'callBack': flask.url_for('callback', _external=True)
+        'callBack': flask.url_for('callback', _external=True),
+        'leaseData': {
+            'standard': {
+                'address': '123 Super Dr.'
+            }
+        }
     }
     context = get_settings(configuration=configuration)
     context['refresh'] = datetime.datetime.now().strftime('%Y%m%d%H%M')

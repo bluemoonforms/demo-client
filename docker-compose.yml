@@ -8,7 +8,7 @@ services:
     env_file: .env
     ports:
       - "8010:80"
-    command: tail -f /app/uwsgi.ini
+    command: python /app/main.py
 version: '2'
 networks:
   default:
