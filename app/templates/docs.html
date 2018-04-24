@@ -11,34 +11,95 @@
 <br>
 <br>
 <div class="mui-container">
-    <div class="mui--text-title"">Implementing Bluemoon Forms Lease Application</div>
-    <div class="mui--text-subhead">Include the Bluemoon CSS and Material Design Icon files:</div>
-    <pre><code class="html">{%- for css_file in context.css_files %}
+   <div class="mui--text-title"">Implementing Bluemoon Forms Lease Application</div>
+   <div class="mui--text-subhead">Include the Bluemoon CSS and Material Design Icon files:</div>
+   <pre><code class="html">{%- for css_file in context.css_files %}
 &lt;link href=&quot;//{{context.static_url}}/{{css_file}}&quot; rel=&quot;stylesheet&quot; type=&quot;text/css&quot;/&gt;
     {%- endfor %}&lt;link href=&quot;//fonts.googleapis.com/icon?family=Material+Icons&quot; rel=&quot;stylesheet&quot;/&gt;</code></pre>
-    <div class="mui--text-subhead">Add the base container where you want the code to display:</div>
-    <pre><code class="html">&lt;div class=&quot;blueMoon&quot;&gt;&lt;app-root&gt;&lt;/app-root&gt;&lt;/div&gt;</code></pre>
-    <div class="mui--text-subhead">Implement the integration configuration:</div>
-    <pre><code class="html">&lt;script type=&quot;text/javascript&quot;&gt;
+   <div class="mui--text-subhead">Add the base container where you want the code to display:</div>
+   <pre><code class="html">&lt;div class=&quot;blueMoon&quot;&gt;&lt;app-root&gt;&lt;/app-root&gt;&lt;/div&gt;</code></pre>
+   <div class="mui--text-subhead">Implement the integration configuration:</div>
+   <pre><code class="html">&lt;script type=&quot;text/javascript&quot;&gt;
 window.BLUEMOON_CONFIG = {{ context.configuration|tojson_pretty|safe }};
 &lt;/script&gt;</code></pre>
-    <div class="mui--text-subhead">Finally include the JS files:</div>
-    <pre><code class="html">{% for js_file in context.js_files %}
+   <div class="mui--text-subhead">Finally include the JS files:</div>
+   <pre><code class="html">{% for js_file in context.js_files %}
 &lt;script type=&quot;text/javascript&quot; src=&quot;//{{context.static_url}}/{{js_file}}&quot;&gt;&lt;/script&gt;
 {%- endfor %}</code></pre>
 </div>
 <div class="mui-container">
-    <div class="mui--text-title"mui--text-display1">Optional integration details</div>
-    <div class="mui--text-subhead">Create Lease</div>
-    <pre><code class="html">&lt;script type=&quot;text/javascript&quot;&gt;
+   <div class="mui--text-title"mui--text-display1">Optional integration details</div>
+   <div class="mui--text-subhead">Parameters</div>
+   <table class="mui-table mui-table--bordered">
+      <thead>
+         <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Description</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <td>apiUrl</td>
+            <td>string</td>
+            <td>URL for API</td>
+         </tr>
+         <tr>
+            <td>propertyNumber</td>
+            <td>number</td>
+            <td>Property Number for Leases</td>
+         </tr>
+         <tr>
+            <td>accessToken</td>
+            <td>string</td>
+            <td>Oauth Token for User</td>
+         </tr>
+         <tr>
+            <td>navigation</td>
+            <td>boolean</td>
+            <td>use navgiation or not</td>
+         </tr>
+         <tr>
+            <td>view</td>
+            <td>string</td>
+            <td>'create', 'edit' or null</td>
+         </tr>
+         <tr>
+            <td>callBack</td>
+            <td>string: URL on your system that will accept a JSON post of the lease data</td>
+         </tr>
+         <tr>
+            <td>leaseData</td>
+            <td>object</td>
+            <td>Data to prepoulate the lease object with.</td>
+         </tr>
+         <tr>
+            <td>origin</td>
+            <td>string</td>
+            <td>client specific values, please ask Bluemoon</td>
+         </tr>
+         <tr>
+            <td>lockPopulatedFields</td>
+            <td>boolean</td>
+            <td>lock fields poplulated with data from leaseData</td>
+         </tr>
+         <tr>
+            <td>disableFieldToolTips</td>
+            <td>boolean</td>
+            <td>disable field tool tips that display field names</td>
+         </tr>
+      </tbody>
+   </table>
+   <div class="mui--text-subhead">Create Lease</div>
+   <pre><code class="html">&lt;script type=&quot;text/javascript&quot;&gt;
 window.BLUEMOON_CONFIG = {{ context.create_view|tojson_pretty|safe }};
 &lt;/script&gt;</code></pre>
-    <div class="mui--text-subhead">Edit Lease</div>
-    <pre><code class="html">&lt;script type=&quot;text/javascript&quot;&gt;
+   <div class="mui--text-subhead">Edit Lease</div>
+   <pre><code class="html">&lt;script type=&quot;text/javascript&quot;&gt;
 window.BLUEMOON_CONFIG = {{ context.edit_view|tojson_pretty|safe }};
 &lt;/script&gt;</code></pre>
-    <div class="mui--text-subhead">Lease Data</div>
-    <pre><code class="json">
+   <div class="mui--text-subhead">Lease Data</div>
+   <pre><code class="json">
 {
    "lease_id":"34973569",
    "data":{
