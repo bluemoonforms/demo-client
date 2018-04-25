@@ -155,7 +155,7 @@ def get_property_number(token):
     if response.status_code == 200:
         # Try to get the aptdb property number
         for prop in data['data']:
-            if prop['unitType'] == 'aptdb':
+            if prop['unit_type'] == 'aptdb':
                 return prop['id']
         # No apt db then just return the first one
         return data['data'][0]['id']
