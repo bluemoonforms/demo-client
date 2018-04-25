@@ -9,6 +9,14 @@ services:
     ports:
       - "8010:80"
     command: python /app/main.py
+  database:
+    image: mysql:5.7
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=8TV6xyAu6^7TP38rhB8s
+      - MYSQL_DATABASE=demo
+      - MYSQL_USER=demo
+      - MYSQL_PASSWORD=8TV6xyAu6^7TP38rhB8s
 version: '2'
 networks:
   default:

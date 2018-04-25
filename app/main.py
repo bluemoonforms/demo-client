@@ -3,28 +3,44 @@ import os
 import flask
 import flask_login
 import requests
-import sqlite3
 import json
 import datetime
 from flask_login.mixins import UserMixin
 from wtforms import Form, PasswordField, StringField, IntegerField
 from wtforms.validators import ValidationError
-
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import and_
 from urllib.parse import urlparse, urljoin
 
-login_manager = flask_login.LoginManager()
+# Flask Setup
 
+login_manager = flask_login.LoginManager()
 app = flask.Flask(__name__)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
+    os.getenv('DB_USER', 'demo'),
+    os.getenv('DB_PASSWORD'),
+    os.getenv('DB_HOST'),
+    os.getenv('DB_PORT', '3306'),
+    os.getenv('DB_NAME', 'demo'),
+)
 app.secret_key = 'o\x91\xc0\xcehh\xa5\xbf!\x8b\xcak2\xfe\x81\x89\xb6Ch9\x80\xcb6\xc7'
 login_manager.init_app(app)
 login_manager.login_view = "login"
+db = SQLAlchemy(app)
 
-DATABASE = '/app/database.db'
 BASE_HEADERS = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Provider': 'legacy'
 }
+
+
+def is_safe_url(target):
+    """Just a safety check from flask snippets."""
+    ref_url = urlparse(flask.request.host_url)
+    test_url = urlparse(urljoin(flask.request.host_url, target))
+    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 
 def to_pretty_json(value):
@@ -38,53 +54,42 @@ def to_pretty_json(value):
 
 app.jinja_env.filters['tojson_pretty'] = to_pretty_json
 
-
-def get_db():
-    """Create the database connection."""
-    db = getattr(flask.g, '_database', None)
-    if db is None:
-        conn = sqlite3.connect(DATABASE)
-        conn.row_factory = sqlite3.Row
-        db = flask.g._database = conn
-    return db
+# Forms
 
 
-@app.teardown_appcontext
-def close_connection(exception):
-    """Close the database connection."""
-    db = getattr(flask.g, '_database', None)
-    if db is not None:
-        db.close()
+class LoginForm(Form):
+    username = StringField('Username')
+    license = StringField('License')
+    password = PasswordField('Password')
 
 
-def init_db():
-    """Initialize the database."""
-    with app.app_context():
-        db = get_db()
-        with app.open_resource('/app/schema.sql', mode='r') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
+def validate_lease_id(form, field):
+    """API query to fetch lease number."""
+    headers = BASE_HEADERS.copy()
+    headers['Authorization'] = 'Bearer {}'.format(flask_login.current_user.token)
+    url = '{}/api/lease/{}'.format(os.getenv('OAUTH_CLIENT_URL'), field.data)
+    response = requests.get(url, headers=headers)
+    if response.status_code == 404:
+        raise ValidationError('Unable to find lease')
+    if response.status_code != 200:
+        raise ValidationError('Invalid lease id')
 
 
-def is_safe_url(target):
-    """Just a safety check from flask snippets."""
-    ref_url = urlparse(flask.request.host_url)
-    test_url = urlparse(urljoin(flask.request.host_url, target))
-    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+class SelectLeaseForm(Form):
+    lease_id = IntegerField('Lease ID', [validate_lease_id])
+
+# User utils and such
 
 
-class User(UserMixin):
-    def __init__(self, data):
-        self.data = {
-            'id': data['id'],
-            'username': data['username'],
-            'license': data['license'],
-            'token': data['token'],
-        }
-        self.id = data['id']
-        self.username = data['username']
-        self.license = data['license']
-        self.token = data['token']
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), nullable=False)
+    license = db.Column(db.String(40), nullable=False)
+    token = db.Column(db.Text, nullable=False)
+
+    def __repr__(self):
+        """Representation."""
+        return '<User %r>' % self.username
 
     @property
     def is_authenticated(self):
@@ -101,79 +106,12 @@ class User(UserMixin):
     def get_id(self):
         return '{}'.format(self.id)
 
-    @staticmethod
-    def find_user(license, username):
-        cur = get_db().cursor()
-        cur.execute(
-            'SELECT id, username, license, token FROM users WHERE license=? AND username=?',
-            (license, username)
-        )
-        results = cur.fetchone()
-        return results
-
-    @staticmethod
-    def store_user(license, username, token):
-        """Shove a user into the sqlite db."""
-        results = User.find_user(license=license, username=username)
-        if results:
-            User.update(user_id=results['id'], token=token)
-        else:
-            User.create(license=license, username=username, token=token)
-        results = User.find_user(license=license, username=username)
-        return User(data=results)
-
-    @staticmethod
-    def update(user_id, token):
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('UPDATE users SET token=? WHERE id=?', (token, user_id))
-        conn.commit()
-
-    @staticmethod
-    def create(license, username, token):
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('INSERT INTO users (license, username, token) VALUES (?, ?, ?)', (
-            license, username, token)
-        )
-        conn.commit()
-
-    @staticmethod
-    def get(user_id):
-        cur = get_db().cursor()
-        cur.execute('SELECT id, username, license, token FROM users WHERE id=?', (user_id,))
-        results = cur.fetchone()
-        if results:
-            return User(data=results)
-
-
-class LoginForm(Form):
-    username = StringField('Username')
-    license = StringField('License')
-    password = PasswordField('Password')
-
-
-def validate_lease_id(form, field):
-    """API query to fetch lease number."""
-    headers = BASE_HEADERS.copy()
-    headers['Authorization'] = 'Bearer {}'.format(flask_login.current_user.data['token'])
-    url = '{}/api/lease/{}'.format(os.getenv('OAUTH_CLIENT_URL'), field.data)
-    response = requests.get(url, headers=headers)
-    if response.status_code == 404:
-        raise ValidationError('Unable to find lease')
-    if response.status_code != 200:
-        raise ValidationError('Invalid lease id')
-
-
-class SelectLeaseForm(Form):
-    lease_id = IntegerField('Lease ID', [validate_lease_id])
-
 
 @login_manager.user_loader
 def load_user(user_id):
     """Find the user."""
     try:
-        results = User.get(int(user_id))
+        results = User.query.get(int(user_id))
     except (ValueError, TypeError):
         results = None
     return results
@@ -194,8 +132,17 @@ def login_user(license, username, password):
     response = requests.post(url, headers=headers, json=payload)
     data = response.json()
     if response.status_code == 200:
-        user = User.store_user(license=license, username=username, token=data['access_token'])
+        user = User.query.filter(and_(User.username == username, User.license == license)).first()
+        if not user:
+            user = User(username=username, license=license, token=data['access_token'])
+            db.session.add(user)
+        else:
+            user.token = data['access_token']
+        db.session.commit()
         flask_login.login_user(user)
+
+
+# Generic Utils
 
 
 def get_property_number(token):
@@ -243,6 +190,8 @@ def get_settings(configuration):
     }
     return context
 
+# Views
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -269,8 +218,8 @@ def index():
     """The primary integration page for the application."""
     configuration = {
         'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
-        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
-        'accessToken': flask_login.current_user.data['token']
+        'propertyNumber': get_property_number(flask_login.current_user.token),
+        'accessToken': flask_login.current_user.token
     }
     context = get_settings(configuration=configuration)
     context['refresh'] = datetime.datetime.now().strftime('%Y%m%d%H%M')
@@ -283,10 +232,28 @@ def create():
     """An example of a lease create view only."""
     configuration = {
         'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
-        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
-        'accessToken': flask_login.current_user.data['token'],
+        'propertyNumber': get_property_number(flask_login.current_user.token),
+        'accessToken': flask_login.current_user.token,
         'navigation': False,
         'view': 'create',
+        'callBack': flask.url_for('callback', _external=True)
+    }
+    context = get_settings(configuration=configuration)
+    context['refresh'] = datetime.datetime.now().strftime('%Y%m%d%H%M')
+    return flask.render_template('integration.html', context=context)
+
+
+@app.route('/badcreate', methods=['GET'])
+@flask_login.login_required
+def bad_create():
+    """An example of a lease create view only."""
+    configuration = {
+        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'propertyNumber': get_property_number(flask_login.current_user.token),
+        'accessToken': flask_login.current_user.token,
+        'navigation': False,
+        'view': 'edit',
+        'leaseId': 0,
         'callBack': flask.url_for('callback', _external=True)
     }
     context = get_settings(configuration=configuration)
@@ -311,8 +278,8 @@ def edit(lease_id):
     """An example of a lease edit view only."""
     configuration = {
         'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
-        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
-        'accessToken': flask_login.current_user.data['token'],
+        'propertyNumber': get_property_number(flask_login.current_user.token),
+        'accessToken': flask_login.current_user.token,
         'navigation': False,
         'view': 'edit',
         'leaseId': lease_id,
@@ -341,13 +308,13 @@ def documentation():
     """Documentation lease edit view only."""
     configuration = {
         'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
-        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
+        'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': 'TOKEN_GOES_HERE'
     }
     context = get_settings(configuration=configuration)
     context['create_view'] = {
         'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
-        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
+        'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': 'TOKEN_GOES_HERE',
         'navigation': False,
         'view': 'create',
@@ -356,7 +323,7 @@ def documentation():
     }
     context['edit_view'] = {
         'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
-        'propertyNumber': get_property_number(flask_login.current_user.data['token']),
+        'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': 'TOKEN_GOES_HERE',
         'navigation': False,
         'view': 'edit',

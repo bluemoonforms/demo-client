@@ -4,3 +4,5 @@ jinja2
 flask-login
 requests
 wtforms
+PyMySQL
+Flask-SQLAlchemy
