@@ -284,6 +284,9 @@ def edit(lease_id):
         'view': 'edit',
         'leaseId': lease_id,
         'callBack': flask.url_for('callback', _external=True),
+        'origin': 'yardi',
+        'lockPopulatedFields': True,
+        'disableFieldToolTips': True,
         'leaseData': {
             'standard': {
                 'address': '123 Super Dr.'
