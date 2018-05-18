@@ -16,6 +16,7 @@ from urllib.parse import urlparse, urljoin
 
 login_manager = flask_login.LoginManager()
 app = flask.Flask(__name__)
+app.config['DEBUG_CDN'] = os.getenv('DEBUG_CDN', False)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
     os.getenv('DB_USER', 'demo'),
@@ -172,7 +173,7 @@ def get_settings(configuration):
         'styles/styles.bundle.css',
     ]
 
-    if app.debug:
+    if app.config['DEBUG_CDN']:
         js_files = [
             'inline.bundle.js',
             'polyfills.bundle.js',
@@ -355,4 +356,5 @@ if __name__ == '__main__':
     # Only for debugging while developing
     app.jinja_env.auto_reload = True
     app.config['TEMPLATES_AUTO_RELOAD'] = True
+    db.create_all()
     app.run(host='0.0.0.0', debug=True, port=80)
