@@ -9,6 +9,9 @@ services:
     ports:
       - "8010:80"
     command: python /app/main.py
+    depends_on:
+      database:
+        condition: service_healthy
   database:
     image: mysql:5.7
     restart: always
@@ -17,7 +20,11 @@ services:
       - MYSQL_DATABASE=demo
       - MYSQL_USER=demo
       - MYSQL_PASSWORD=8TV6xyAu6^7TP38rhB8s
-version: '2'
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+version: '2.1'
 networks:
   default:
     external:
