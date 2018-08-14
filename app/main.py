@@ -13,7 +13,6 @@ from sqlalchemy import and_
 from urllib.parse import urlparse, urljoin
 
 # Flask Setup
-
 login_manager = flask_login.LoginManager()
 app = flask.Flask(__name__)
 app.config['DEBUG_CDN'] = os.getenv('DEBUG_CDN', False)
@@ -25,9 +24,19 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
     os.getenv('DB_PORT', '3306'),
     os.getenv('DB_NAME', 'demo'),
 )
+# API URL and OAUTH CLIENT URL are generally the same, API URL for Bluemoon API
+app.config['API_URL'] = os.getenv('API_URL')
+app.config['OAUTH_CLIENT_URL'] = os.getenv('OAUTH_CLIENT_URL')
+
+# static file host for Bluemoon API
+app.config['LEASE_EDITOR_CDN'] = os.getenv('LEASE_EDITOR_CDN')
+
+app.config['OAUTH_CLIENT_ID'] = os.getenv('OAUTH_CLIENT_ID')
+app.config['OAUTH_CLIENT_SECRET'] = os.getenv('OAUTH_CLIENT_SECRET')
+
 app.secret_key = 'o\x91\xc0\xcehh\xa5\xbf!\x8b\xcak2\xfe\x81\x89\xb6Ch9\x80\xcb6\xc7'
 login_manager.init_app(app)
-login_manager.login_view = "login"
+login_manager.login_view = 'login'
 db = SQLAlchemy(app)
 
 BASE_HEADERS = {
@@ -121,14 +130,14 @@ def load_user(user_id):
 def login_user(license, username, password):
     """Take the login credentials and validate against oauth password grant server."""
     headers = BASE_HEADERS.copy()
-    url = '{}/oauth/token'.format(os.getenv('OAUTH_CLIENT_URL'))
+    url = '{}/oauth/token'.format(app.config['OAUTH_CLIENT_URL'])
     payload = {
         'username': username,
         'password': password,
         'license': license,
         'grant_type': 'password',
-        'client_id': os.getenv('OAUTH_CLIENT_ID'),
-        'client_secret': os.getenv('OAUTH_CLIENT_SECRET')
+        'client_id': app.config['OAUTH_CLIENT_ID'],
+        'client_secret': app.config['OAUTH_CLIENT_SECRET'],
     }
     response = requests.post(url, headers=headers, json=payload)
     data = response.json()
@@ -150,7 +159,7 @@ def get_property_number(token):
     """API query to fetch property number."""
     headers = BASE_HEADERS.copy()
     headers['Authorization'] = 'Bearer {}'.format(token)
-    url = '{}/api/property'.format(os.getenv('OAUTH_CLIENT_URL'))
+    url = '{}/api/property'.format(app.config['OAUTH_CLIENT_URL'])
     response = requests.get(url, headers=headers)
     data = response.json()
     if response.status_code == 200:
@@ -184,7 +193,7 @@ def get_settings(configuration):
         css_files = []
 
     context = {
-        'static_url': os.getenv('LEASE_EDITOR_CDN', 'localhost:4201'),
+        'static_url': app.config['LEASE_EDITOR_CDN'],
         'configuration': configuration,
         'js_files': js_files,
         'css_files': css_files
@@ -218,7 +227,7 @@ def login():
 def index():
     """The primary integration page for the application."""
     configuration = {
-        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'apiUrl': app.config['API_URL'],
         'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': flask_login.current_user.token
     }
@@ -232,7 +241,7 @@ def index():
 def create():
     """An example of a lease create view only."""
     configuration = {
-        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'apiUrl': app.config['API_URL'],
         'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': flask_login.current_user.token,
         'navigation': False,
@@ -249,7 +258,7 @@ def create():
 def bad_create():
     """An example of a lease create view only."""
     configuration = {
-        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'apiUrl': app.config['API_URL'],
         'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': flask_login.current_user.token,
         'navigation': False,
@@ -278,7 +287,7 @@ def select_lease():
 def edit(lease_id):
     """An example of a lease edit view only."""
     configuration = {
-        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'apiUrl': app.config['API_URL'],
         'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': flask_login.current_user.token,
         'navigation': False,
@@ -311,13 +320,13 @@ def callback():
 def documentation():
     """Documentation lease edit view only."""
     configuration = {
-        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'apiUrl': app.config['API_URL'],
         'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': 'TOKEN_GOES_HERE'
     }
     context = get_settings(configuration=configuration)
     context['create_view'] = {
-        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'apiUrl': app.config['API_URL'],
         'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': 'TOKEN_GOES_HERE',
         'navigation': False,
@@ -326,7 +335,7 @@ def documentation():
         'leaseData': None,
     }
     context['edit_view'] = {
-        'apiUrl': os.getenv('API_URL', 'https://dev-lease.bluemoonformsdev.com'),
+        'apiUrl': app.config['API_URL'],
         'propertyNumber': get_property_number(flask_login.current_user.token),
         'accessToken': 'TOKEN_GOES_HERE',
         'navigation': False,
