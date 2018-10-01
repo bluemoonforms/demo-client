@@ -229,7 +229,8 @@ def index():
     configuration = {
         'apiUrl': app.config['API_URL'],
         'propertyNumber': get_property_number(flask_login.current_user.token),
-        'accessToken': flask_login.current_user.token
+        'accessToken': flask_login.current_user.token,
+        'staff': flask_login.current_user.user.is_staff
     }
     context = get_settings(configuration=configuration)
     context['refresh'] = datetime.datetime.now().strftime('%Y%m%d%H%M')
