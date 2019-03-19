@@ -127,14 +127,13 @@ def load_user(user_id):
     return results
 
 
-def login_user(license, username, password):
+def login_user(username, password):
     """Take the login credentials and validate against oauth password grant server."""
     headers = BASE_HEADERS.copy()
     url = '{}/oauth/token'.format(app.config['OAUTH_CLIENT_URL'])
     payload = {
         'username': username,
         'password': password,
-        'license': license,
         'grant_type': 'password',
         'client_id': app.config['OAUTH_CLIENT_ID'],
         'client_secret': app.config['OAUTH_CLIENT_SECRET'],
@@ -142,9 +141,9 @@ def login_user(license, username, password):
     response = requests.post(url, headers=headers, json=payload)
     data = response.json()
     if response.status_code == 200:
-        user = User.query.filter(and_(User.username == username, User.license == license)).first()
+        user = User.query.filter(User.username == username).first()
         if not user:
-            user = User(username=username, license=license, token=data['access_token'])
+            user = User(username=username, license="nada", token=data['access_token'])
             db.session.add(user)
         else:
             user.token = data['access_token']
@@ -209,8 +208,7 @@ def login():
     form = LoginForm(flask.request.form)
     if flask.request.method == 'POST' and form.validate():
         login_user(
-            license=form.license.data,
-            username=form.username.data,
+            username='{}@{}'.format(form.username.data, form.license.data),
             password=form.password.data
         )
         next = flask.request.args.get('next')
